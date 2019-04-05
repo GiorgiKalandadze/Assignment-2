@@ -156,6 +156,7 @@ public class Board	{
 				return result;
 			}
 			
+			/////
 			grid[height - 1 - r][width - 1 - r] = true;
 			//Update widths and heights arrays
 			widths[height - 1 - r] = height - r;
