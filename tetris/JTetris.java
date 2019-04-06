@@ -715,15 +715,7 @@ public class JTetris extends JComponent {
 	 Creates a frame with a JTetris.
 	*/
 	public static void main(String[] args) {
-		//My
-		PieceTestMy m = new PieceTestMy();
-		try {
-			m.setUp();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		m.testWidth();
+		
 		
 		
 		// Set GUI Look And Feel Boilerplate.
