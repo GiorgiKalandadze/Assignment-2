@@ -44,28 +44,24 @@ public class Board {
 		xWidths = new int[height];
 		xHeights = new int[width];
 
-		// initializeBoard();
-		Arrays.fill(widths, 0);
-		Arrays.fill(heights, 0);
-		Arrays.fill(xWidths, 0);
-		Arrays.fill(xHeights, 0);
-		maxHeight = xMaxHeight = 0;
 		
+		maxHeight = xMaxHeight = 0;
+
 		doBackup();
-		// YOUR CODE HERE
 	}
 
-	/*
-	 * This method initializes empty board In other words, fills board with zeros
+	/**
+	 * Backup date before change the board status, use for undo()
 	 */
-//	private void initializeBoard() {
-//		for(int row = 0; row < height; row++) {
-//			for(int col = 0; col < width; col++) {
-//				grid[col][row] = false;
-//				xGrid[col][row] = false;
-//			}
-//		}
-//	}
+	private void doBackup() {
+		System.arraycopy(widths, 0, xWidths, 0, height);
+		System.arraycopy(heights, 0, xHeights, 0, width);
+		xMaxHeight = maxHeight;
+		// Copy grid
+		for (int col = 0; col < width; col++) {
+			System.arraycopy(grid[col], 0, xGrid[col], 0, height);
+		}
+	}
 
 	/**
 	 * Returns the width of the board in blocks.
@@ -97,75 +93,30 @@ public class Board {
 			int[] tmpWidths = new int[height];
 			int[] tmpHeights = new int[width];
 			int tmpMaxHeight = 0;
-			Arrays.fill(tmpWidths, 0);
-			Arrays.fill(tmpHeights, 0);
-			
-			for(int col = 0; col < width; col++) {
-				for(int row = 0; row < height; row++) {
-					if(grid[col][row]) {
+
+			for (int col = 0; col < width; col++) {
+				for (int row = 0; row < height; row++) {
+					if (grid[col][row]) {
 						tmpWidths[row]++;
 						tmpHeights[col] = row + 1;
-						if(tmpHeights[col] > tmpMaxHeight) {
+						if (tmpHeights[col] > tmpMaxHeight) {
 							tmpMaxHeight = tmpHeights[col];
 						}
 					}
 				}
 			}
-		
-			if(!Arrays.equals(widths, tmpWidths)) { 
+
+			if (!Arrays.equals(widths, tmpWidths)) {
 				throw new RuntimeException("Problem with widths");
 			}
-			
-			if(!Arrays.equals(heights, tmpHeights)) { 
+
+			if (!Arrays.equals(heights, tmpHeights)) {
 				throw new RuntimeException("Problem with heights");
 			}
-			if(tmpMaxHeight != maxHeight) {
+			if (tmpMaxHeight != maxHeight) {
 				throw new RuntimeException("Problem with maxHeight");
 			}
 		}
-//					System.out.println(c);
-//					System.out.println(heights[col]);
-//					throw new RuntimeException("Problem with heights");
-//				}
-//				throw new RuntimeException("Problem with maxHeight");
-//			throw new RuntimeException("Problem with widths");
-			// It	erate over whole grid
-			// Rows
-//			for (int row = 0; row < height; row++) {
-//				int r = 0;
-//				for (int col = 0; col < width; col++) {
-//					if (grid[col][row])
-//						r++;
-//				}
-//				if (r != widths[row])
-//					throw new RuntimeException("Problem with widths");
-//			}
-//
-//			// Heights
-//			int max = 0;
-//			for (int col = 0; col < width; col++) {
-//				int c = 0;
-//				for (int row = 0; row < height; row++) {
-//					if (grid[col][row]) {
-//						if (row + 1 > c) {
-//							c = row + 1;
-//						}
-//					}
-//				}
-//				if (c != heights[col]) {
-//					System.out.println(c);
-//					System.out.println(heights[col]);
-//					throw new RuntimeException("Problem with heights");
-//				}
-//				if (c > max) {
-//					max = c;
-//				}
-//			}
-//			System.out.println(max);
-//			System.out.println(maxHeight);
-//			if (max != maxHeight)
-//				throw new RuntimeException("Problem with maxHeight");
-//		}
 	}
 
 	/**
@@ -181,7 +132,7 @@ public class Board {
 		int max = 0;
 		for (int i = 0; i < piece.getWidth(); i++) {
 			int currHeight = heights[x + i];
-			int ans = currHeight - currSkirt[i]; //????
+			int ans = currHeight - currSkirt[i]; // ????
 			if (ans > max) {
 				max = ans;
 			}
@@ -209,7 +160,13 @@ public class Board {
 	 * valid width/height area always return true.
 	 */
 	public boolean getGrid(int x, int y) {
-		return isOutOfBounds(x, y) || grid[x][y]; // YOUR CODE HERE
+		return grid[x][y]; // YOUR CODE HERE
+	}
+
+	private boolean isOutOfBounds(int x, int y) {
+		if (x < 0 || x >= width || y < 0 || y >= height)
+			return true;
+		return false;
 	}
 
 	public static final int PLACE_OK = 0;
@@ -236,110 +193,48 @@ public class Board {
 		if (!committed)
 			throw new RuntimeException("place commit problem");
 		committed = false;
-	
+
 		int result = PLACE_OK;
 		doBackup();
 		TPoint[] body = piece.getBody();
-		
-		for(int i = 0; i < body.length; i++) {
+
+		for (int i = 0; i < body.length; i++) {
 			TPoint currPoint = body[i];
 			// Error case 1 - Out of bounds
 			if (isOutOfBounds(x + currPoint.x, y + currPoint.y)) {
-				result = PLACE_OUT_BOUNDS;
-				return result;
+				return PLACE_OUT_BOUNDS;
 			}
-			
+
 			// Error case 2 - Overlap
-			if(grid[x + currPoint.x][y + currPoint.y]) {
-				result = PLACE_BAD;
-				return result;
+			if (grid[x + currPoint.x][y + currPoint.y]) {
+				return PLACE_BAD;
+
 			}
-			
-			widths[y + currPoint.y]++;
-			
-			if(heights[x + currPoint.x] < y + currPoint.y + 1) {
-				heights[x + currPoint.x] = y + currPoint.y + 1;
-				if(maxHeight < heights[x + currPoint.x]) {
-					maxHeight = heights[x + currPoint.x];
-				}
-			}
-			
-			if(widths[y + currPoint.y] == width) {
+
+			updateVariables(x + currPoint.x, y + currPoint.y);
+
+			if (widths[y + currPoint.y] == width) {
 				result = PLACE_ROW_FILLED;
 			}
 			grid[x + currPoint.x][y + currPoint.y] = true;
-			
-		}
-////		// Error case 1 - Out of bounds
-////		if (isOutOfBounds(x + body., y + piece.getHeight())) {
-////			result = PLACE_OUT_BOUNDS;
-////			return result;
-////		}
-//
-//		// Error case 2 - Overlap
-//		if (doOverlap(body, x, y)) {
-//			result = PLACE_BAD;
-//			return result;
-//		}
-//
-//		boolean rowIsFilled = updateVariables(piece, x, y);
-//		// Check if any row is filled
-//		if (rowIsFilled) {
-//			result = PLACE_ROW_FILLED;
-//		}
 
-		 sanityCheck();
+		}
+
+		sanityCheck();
 		return result;
 	}
 
 	/*
-	 * This method updates variables and also checks if any row is filled or not
+	 * This method updates variables - widths, heights and maxHeight
 	 */
-	private boolean updateVariables(Piece p, int x, int y) {
-		boolean rowFilled = false;
-		TPoint[] body = p.getBody();
-		for (int i = 0; i < body.length; i++) {
-			TPoint currPoint = body[i];
-			grid[x + currPoint.x][y + currPoint.y] = true;
-			widths[y + currPoint.y]++;
-			// if(y + currPoint.y + 1 > heights[x + currPoint.x]) {
-			heights[x + currPoint.x] = y + currPoint.y + 1;
-
-			// }
-
-			// Update maxHeight
-			if (heights[x + currPoint.x] > maxHeight) {
-				maxHeight = heights[x + currPoint.x];
-			}
-
-			// Check if row is filled
-			if (widths[y + currPoint.y] == width) {
-				rowFilled = true;
+	private void updateVariables(int a, int b) {
+		if (b + 1 > heights[a]) {
+			heights[a] = b + 1;
+			if (heights[a] > maxHeight) {
+				maxHeight = heights[a];
 			}
 		}
-		return rowFilled;
-	}
-
-	/*
-	 * This method checks weather current piece overalps already filled spot or not
-	 */
-	private boolean doOverlap(TPoint[] body, int x, int y) {
-		for (int i = 0; i < body.length; i++) {
-			TPoint currPoint = body[i];
-			if (grid[x + currPoint.x][y + currPoint.y]) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/*
-	 * This method checks whether given coordinates is out of bounds or not
-	 */
-	private boolean isOutOfBounds(int x, int y) {
-		if (x < 0 || x >= width || y < 0 || y >= height)
-			return false;
-		return true;
+		widths[b]++;
 	}
 
 	/**
@@ -361,12 +256,12 @@ public class Board {
 				}
 				widths[to] = widths[from];
 				to++;
-
 			} else {
 				rowsCleared++;
 			}
 		}
 
+		// Fill the removed rows with false grid
 		for (int start = to; to < maxHeight; to++) {
 			for (int g = 0; g < width; g++) {
 				grid[g][start] = false;
@@ -374,31 +269,21 @@ public class Board {
 			widths[start] = 0;
 		}
 
-		// Heights//Heights
+		// Update heights
 		for (int col = 0; col < width; col++) {
-			int c = 0;
-			for (int row = 0; row < height; row++) {
+			for (int row = heights[col]; row >= 0; row--) {
 				if (grid[col][row]) {
 					heights[col] = row + 1;
 					break;
-				}  else {
+				} else {
 					heights[col] = 0;
 				}
 			}
 		}
-		
-		//calculate maxHeight
-		int m = 0;
-		for(int col = 0; col < width; col++) {
-			if(heights[col] > m) {
-				m = heights[col];
-			}
-		}
-		maxHeight -= rowsCleared;
-		System.out.println(m);
-		System.out.println(maxHeight);
-		maxHeight = m;
-		
+
+		// Udpate maxHeight
+		maxHeight = maxHeight - rowsCleared;
+
 		sanityCheck();
 		return rowsCleared;
 	}
@@ -409,7 +294,6 @@ public class Board {
 	 * then the second undo() does nothing. See the overview docs.
 	 */
 	public void undo() {
-		System.out.println(committed);
 		if (!committed) {
 			int[] widthTemp = widths;
 			widths = xWidths;
@@ -424,29 +308,8 @@ public class Board {
 			boolean[][] tmpGrid = grid;
 			grid = xGrid;
 			xGrid = tmpGrid;
-			//doBackup2();
 		}
 		committed = true;
-	}
-
-	private void doBackup() {
-		System.arraycopy(widths, 0, xWidths, 0, height);
-		System.arraycopy(heights, 0, xHeights, 0, width);
-		xMaxHeight = maxHeight;
-		// Copy grid
-		for (int col = 0; col < width; col++) {
-			System.arraycopy(grid[col], 0, xGrid[col], 0, height);
-		}
-	}
-	
-	private void doBackup2() {
-		System.arraycopy(xWidths, 0, widths, 0, height);
-		System.arraycopy(xHeights, 0, heights, 0, width);
-		maxHeight = xMaxHeight;
-		// Copy grid
-		for (int col = 0; col < width; col++) {
-			System.arraycopy(xGrid[col], 0, grid[col], 0, height);
-		}
 	}
 
 	/**
